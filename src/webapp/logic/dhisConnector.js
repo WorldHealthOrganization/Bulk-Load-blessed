@@ -1,16 +1,35 @@
 import _ from "lodash";
 import { promiseMap } from "../utils/promises";
+import { getTrackerProgramMetadata } from "../../data/Dhis2RelationshipTypes";
 
 export async function getElement(api, type, id) {
-    const fields =
-        "id,displayName,organisationUnits[id,path],attributeValues[attribute[code],value],categoryCombo,dataSetElements,sections,periodType,programStages";
-    const response = await api.get(`/${type}/${id}`, { fields }).getData();
+    const endpoint = type === "dataSets" ? "dataSets" : "programs";
+    const fields = [
+        "id",
+        "displayName",
+        "organisationUnits[id,path]",
+        "attributeValues[attribute[code],value]",
+        "categoryCombo",
+        "dataSetElements",
+        "formType",
+        "sections[id,sortOrder,dataElements[id]]",
+        "periodType",
+        "programStages",
+        "programType",
+        "enrollmentDateLabel",
+        "incidentDateLabel",
+        "trackedEntityType",
+        "captureCoordinates",
+        "programTrackedEntityAttributes[trackedEntityAttribute[id,name,valueType,confidential,optionSet[id,name,options[id]]]],",
+    ].join(",");
+    const response = await api.get(`/${endpoint}/${id}`, { fields }).getData();
     return { ...response, type };
 }
 
 export async function getElementMetadata({ element, api, orgUnitIds }) {
     const elementMetadata = new Map();
-    const rawMetadata = await api.get(`/${element.type}/${element.id}/metadata.json`).getData();
+    const endpoint = element.type === "dataSets" ? "dataSets" : "programs";
+    const rawMetadata = await api.get(`/${endpoint}/${element.id}/metadata.json`).getData();
     _.forOwn(rawMetadata, (value, type) => {
         if (Array.isArray(value)) {
             _.forEach(value, object => {
@@ -28,16 +47,12 @@ export async function getElementMetadata({ element, api, orgUnitIds }) {
             .getData()
     );
 
+    const metadata =
+        element.type === "trackerPrograms" ? await getTrackerProgramMetadata(element, api) : {};
+
     const organisationUnits = _.flatMap(responses, ({ organisationUnits }) => organisationUnits);
 
-    return { element, elementMetadata, organisationUnits, rawMetadata };
-}
-
-export async function importData({ element, api, data }) {
-    const endpoint = element.type === "programs" ? "/events" : "/dataValueSets";
-    const object = element.type === "programs" ? { events: data } : { dataValues: data };
-    const response = await api.post(endpoint, {}, object).getData();
-    return response;
+    return { element, metadata, elementMetadata, organisationUnits, rawMetadata };
 }
 
 export function importOrgUnitByUID(api, uid) {
