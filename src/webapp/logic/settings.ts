@@ -19,9 +19,12 @@ const publicFields = [
     "models",
     "userPermissionsForGeneration",
     "userGroupPermissionsForGeneration",
+    "userPermissionsForImport",
+    "userGroupPermissionsForImport",
     "userPermissionsForSettings",
     "userGroupPermissionsForSettings",
     "orgUnitSelection",
+    "duplicateEnabled",
     "duplicateExclusion",
     "duplicateTolerance",
     "duplicateToleranceUnit",
@@ -32,7 +35,7 @@ const allFields = [...privateFields, ...publicFields];
 type Options = Pick<Settings, GetArrayInnerType<typeof allFields>>;
 type PublicOption = Pick<Options, GetArrayInnerType<typeof publicFields>>;
 
-export type PermissionSetting = "generation" | "settings";
+export type PermissionSetting = "generation" | "settings" | "import";
 export type PermissionType = "user" | "userGroup";
 
 interface NamedObject {
@@ -52,9 +55,12 @@ export default class Settings {
     public models: Models;
     public userPermissionsForGeneration: NamedObject[];
     public userGroupPermissionsForGeneration: NamedObject[];
+    public userPermissionsForImport: NamedObject[];
+    public userGroupPermissionsForImport: NamedObject[];
     public userPermissionsForSettings: NamedObject[];
     public userGroupPermissionsForSettings: NamedObject[];
     public orgUnitSelection: OrgUnitSelectionSetting;
+    public duplicateEnabled: boolean;
     public duplicateExclusion: DuplicateExclusion;
     public duplicateTolerance: number;
     public duplicateToleranceUnit: DuplicateToleranceUnit;
@@ -66,33 +72,31 @@ export default class Settings {
         this.models = options.models;
         this.userPermissionsForGeneration = options.userPermissionsForGeneration;
         this.userGroupPermissionsForGeneration = options.userGroupPermissionsForGeneration;
+        this.userPermissionsForImport = options.userPermissionsForImport;
+        this.userGroupPermissionsForImport = options.userGroupPermissionsForImport;
         this.userPermissionsForSettings = options.userPermissionsForSettings;
         this.userGroupPermissionsForSettings = options.userGroupPermissionsForSettings;
         this.orgUnitSelection = options.orgUnitSelection;
+        this.duplicateEnabled = options.duplicateEnabled;
         this.duplicateExclusion = options.duplicateExclusion;
         this.duplicateTolerance = options.duplicateTolerance;
         this.duplicateToleranceUnit = options.duplicateToleranceUnit;
     }
 
-    static async build(api: D2Api): Promise<Settings> {
+    static async build(api: D2Api, compositionRoot: CompositionRoot): Promise<Settings> {
         const authorities = await api.get<string[]>("/me/authorization").getData();
 
-        const d2CurrentUser = await api.currentUser
-            .get({ fields: { id: true, userGroups: { id: true } } })
-            .getData();
+        const d2CurrentUser = await api.currentUser.get({ fields: { id: true, userGroups: { id: true } } }).getData();
 
         const currentUser: CurrentUser = {
             ...d2CurrentUser,
             authorities: new Set(authorities),
         };
 
-        const defaultSettings = CompositionRoot.attach().settings.getDefault();
-        const data = await CompositionRoot.attach().settings.read<Partial<AppSettings>>(
-            Settings.constantCode,
-            defaultSettings
-        );
+        const defaultSettings = compositionRoot.settings.getDefault();
+        const data = await compositionRoot.settings.read<Partial<AppSettings>>(Settings.constantCode, defaultSettings);
 
-        const query = (prop: "permissionsForGeneration" | "permissionsForSettings") => {
+        const query = (prop: "permissionsForGeneration" | "permissionsForSettings" | "permissionsForImport") => {
             const storedValues = data[prop] ?? [];
             const defaultValues = defaultSettings[prop] ?? [];
 
@@ -101,6 +105,13 @@ export default class Settings {
                 filter: { id: { in: [...storedValues, ...defaultValues] } },
             };
         };
+
+        const { users: userPermissionsForImport, userGroups: userGroupPermissionsForImport } = await api.metadata
+            .get({
+                userGroups: query("permissionsForImport"),
+                users: query("permissionsForImport"),
+            })
+            .getData();
 
         const {
             users: userPermissionsForGeneration,
@@ -112,10 +123,7 @@ export default class Settings {
             })
             .getData();
 
-        const {
-            users: userPermissionsForSettings,
-            userGroups: userGroupPermissionsForSettings,
-        } = await api.metadata
+        const { users: userPermissionsForSettings, userGroups: userGroupPermissionsForSettings } = await api.metadata
             .get({
                 userGroups: query("permissionsForSettings"),
                 users: query("permissionsForSettings"),
@@ -127,31 +135,34 @@ export default class Settings {
             models: data.models ?? defaultSettings.models,
             userPermissionsForGeneration,
             userGroupPermissionsForGeneration,
+            userPermissionsForImport,
+            userGroupPermissionsForImport,
             userPermissionsForSettings,
             userGroupPermissionsForSettings,
             orgUnitSelection: data.orgUnitSelection ?? defaultSettings.orgUnitSelection,
+            duplicateEnabled: data.duplicateEnabled ?? true,
             duplicateExclusion: data.duplicateExclusion ?? defaultSettings.duplicateExclusion,
             duplicateTolerance: data.duplicateTolerance ?? defaultSettings.duplicateTolerance,
-            duplicateToleranceUnit:
-                data.duplicateToleranceUnit ?? defaultSettings.duplicateToleranceUnit,
+            duplicateToleranceUnit: data.duplicateToleranceUnit ?? defaultSettings.duplicateToleranceUnit,
         });
     }
 
     validate(): OkOrError {
         const isSomeModelEnabled = _(this.models).values().some();
-        return isSomeModelEnabled
-            ? { status: true }
-            : { status: false, error: i18n.t("Select at least one model") };
+        return isSomeModelEnabled ? { status: true } : { status: false, error: i18n.t("Select at least one model") };
     }
 
-    async save(): Promise<OkOrError> {
+    async save(compositionRoot: CompositionRoot): Promise<OkOrError> {
         const {
             models,
             userPermissionsForGeneration,
             userGroupPermissionsForGeneration,
+            userPermissionsForImport,
+            userGroupPermissionsForImport,
             userPermissionsForSettings,
             userGroupPermissionsForSettings,
             orgUnitSelection,
+            duplicateEnabled,
             duplicateExclusion,
             duplicateTolerance,
             duplicateToleranceUnit,
@@ -159,31 +170,32 @@ export default class Settings {
         const validation = this.validate();
         if (!validation.status) return validation;
 
-        const permissionsForGeneration = [
-            ...userPermissionsForGeneration,
-            ...userGroupPermissionsForGeneration,
-        ].map(ug => ug.id);
+        const permissionsForGeneration = [...userPermissionsForGeneration, ...userGroupPermissionsForGeneration].map(
+            ug => ug.id
+        );
 
-        const permissionsForSettings = [
-            ...userPermissionsForSettings,
-            ...userGroupPermissionsForSettings,
-        ].map(ug => ug.id);
+        const permissionsForSettings = [...userPermissionsForSettings, ...userGroupPermissionsForSettings].map(
+            ug => ug.id
+        );
+        const permissionsForImport = [...userPermissionsForImport, ...userGroupPermissionsForImport].map(ug => ug.id);
 
         const data: AppSettings = {
             models,
             permissionsForGeneration,
             permissionsForSettings,
+            permissionsForImport,
             orgUnitSelection,
+            duplicateEnabled,
             duplicateExclusion,
             duplicateTolerance,
             duplicateToleranceUnit,
         };
 
         try {
-            await CompositionRoot.attach().settings.write<AppSettings>(Settings.constantCode, data);
+            await compositionRoot.settings.write<AppSettings>(Settings.constantCode, data);
             return { status: true };
         } catch (error) {
-            return { status: false, error };
+            return { status: false, error: error.message || "Unknown" };
         }
     }
 
@@ -204,14 +216,14 @@ export default class Settings {
         return this[this.getPermissionField(setting, type)];
     }
 
-    setPermissions(
-        setting: PermissionSetting,
-        type: PermissionType,
-        collection: NamedObject[]
-    ): Settings {
+    setPermissions(setting: PermissionSetting, type: PermissionType, collection: NamedObject[]): Settings {
         return this.updateOptions({
             [this.getPermissionField(setting, type)]: collection,
         });
+    }
+
+    setDuplicateEnabled(duplicateEnabled: boolean): Settings {
+        return this.updateOptions({ duplicateEnabled });
     }
 
     setDuplicateExclusions(program: Id, exclusions: Id[]): Settings {
@@ -238,6 +250,10 @@ export default class Settings {
         return this.models[key];
     }
 
+    isBlankPageVisibleForCurrentUser() {
+        return !this.isImportDataVisibleForCurrentUser() && !this.isTemplateGenerationVisible();
+    }
+
     isTemplateGenerationVisible() {
         const hasGroupAccess = this.findCurrentUser(this.userGroupPermissionsForGeneration);
         const hasUserAccess = this.findCurrentUser(this.userPermissionsForGeneration);
@@ -252,6 +268,13 @@ export default class Settings {
         const hasUserAccess = this.findCurrentUser(this.userPermissionsForSettings);
 
         return isUserAdmin || hasGroupAccess || hasUserAccess;
+    }
+
+    isImportDataVisibleForCurrentUser(): boolean {
+        const hasGroupAccess = this.findCurrentUser(this.userGroupPermissionsForImport);
+        const hasUserAccess = this.findCurrentUser(this.userPermissionsForImport);
+
+        return hasGroupAccess || hasUserAccess;
     }
 
     getModelsInfo(): Array<{ key: Model; name: string; value: boolean }> {
@@ -270,6 +293,10 @@ export default class Settings {
             return "userPermissionsForSettings";
         } else if (setting === "settings" && kind === "userGroup") {
             return "userGroupPermissionsForSettings";
+        } else if (setting === "import" && kind === "user") {
+            return "userPermissionsForImport";
+        } else if (setting === "import" && kind === "userGroup") {
+            return "userGroupPermissionsForImport";
         } else {
             throw new Error("Unsupported field");
         }

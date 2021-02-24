@@ -13,7 +13,9 @@ export interface AppSettings {
     models: Record<Model, boolean>;
     permissionsForGeneration: string[];
     permissionsForSettings: string[];
+    permissionsForImport: string[];
     orgUnitSelection: OrgUnitSelectionSetting;
+    duplicateEnabled: boolean;
     duplicateExclusion: DuplicateExclusion;
     duplicateTolerance: number;
     duplicateToleranceUnit: DuplicateToleranceUnit;

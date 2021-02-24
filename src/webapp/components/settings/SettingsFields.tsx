@@ -10,11 +10,7 @@ import {
     TextField,
 } from "@material-ui/core";
 import React, { ChangeEvent, useCallback, useMemo, useState } from "react";
-import {
-    DuplicateToleranceUnit,
-    Model,
-    OrgUnitSelectionSetting,
-} from "../../../domain/entities/AppSettings";
+import { DuplicateToleranceUnit, Model, OrgUnitSelectionSetting } from "../../../domain/entities/AppSettings";
 import i18n from "../../../locales";
 import Settings, { PermissionSetting } from "../../logic/settings";
 import { Select, SelectOption } from "../select/Select";
@@ -44,6 +40,13 @@ export default function SettingsFields({ settings, onChange }: SettingsFieldsPro
     const setOrgUnitSelection = useCallback(
         ({ value }: SelectOption) => {
             onChange(settings.update({ orgUnitSelection: value as OrgUnitSelectionSetting }));
+        },
+        [settings, onChange]
+    );
+
+    const setDuplicateEnabled = useCallback(
+        ({ value }: SelectOption) => {
+            onChange(settings.update({ duplicateEnabled: value === "true" }));
         },
         [settings, onChange]
     );
@@ -82,6 +85,20 @@ export default function SettingsFields({ settings, onChange }: SettingsFieldsPro
             {
                 value: "both",
                 label: i18n.t("Select Organisation Units on template generation and import"),
+            },
+        ],
+        []
+    );
+
+    const duplicateEnabledOptions: SelectOption[] = useMemo(
+        () => [
+            {
+                value: "true",
+                label: i18n.t("Yes"),
+            },
+            {
+                value: "false",
+                label: i18n.t("No"),
             },
         ],
         []
@@ -145,13 +162,7 @@ export default function SettingsFields({ settings, onChange }: SettingsFieldsPro
                 {modelsInfo.map(({ key, name, value }) => (
                     <FormControlLabel
                         key={key}
-                        control={
-                            <Checkbox
-                                className={classes.checkbox}
-                                checked={value}
-                                onChange={setModel(key)}
-                            />
-                        }
+                        control={<Checkbox className={classes.checkbox} checked={value} onChange={setModel(key)} />}
                         label={name}
                     />
                 ))}
@@ -169,12 +180,22 @@ export default function SettingsFields({ settings, onChange }: SettingsFieldsPro
                 </div>
             </FormGroup>
 
-            <h3 className={classes.title}>{i18n.t("Duplicate detection for events (programs)")}</h3>
+            <h3 className={classes.title}>{i18n.t("Duplicate detection")}</h3>
+
+            <FormGroup className={classes.content} row={true}>
+                <div className={classes.fullWidth}>
+                    <Select
+                        onChange={setDuplicateEnabled}
+                        options={duplicateEnabledOptions}
+                        value={String(settings.duplicateEnabled)}
+                    />
+                </div>
+            </FormGroup>
 
             <div className={classes.content}>
                 <FormGroup className={classes.eventDateTime} row={true}>
                     <p className={classes.duplicateToleranceLabel}>
-                        {i18n.t("Event date time difference")}
+                        {i18n.t("Event date time difference for events (programs)")}
                     </p>
                     <TextField
                         className={classes.duplicateTolerance}
@@ -194,7 +215,7 @@ export default function SettingsFields({ settings, onChange }: SettingsFieldsPro
                         <Icon>filter_list</Icon>
                     </ListItemIcon>
                     <ListItemText
-                        primary={i18n.t("Data elements filter")}
+                        primary={i18n.t("Data elements filter for events (programs)")}
                         secondary={i18n.t("Data elements used for duplicates identification")}
                     />
                 </ListItem>
@@ -210,6 +231,15 @@ export default function SettingsFields({ settings, onChange }: SettingsFieldsPro
                     <ListItemText
                         primary={i18n.t("Access to Template Generation")}
                         secondary={buildSharingDescription("generation")}
+                    />
+                </ListItem>
+                <ListItem button onClick={() => setPermissionsType("import")}>
+                    <ListItemIcon>
+                        <Icon>cloud_upload</Icon>
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={i18n.t("Access to Import Data")}
+                        secondary={buildSharingDescription("import")}
                     />
                 </ListItem>
                 <ListItem button onClick={() => setPermissionsType("settings")}>

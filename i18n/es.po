@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Bulk Load App\n"
-"POT-Creation-Date: 2020-11-18T09:57:39.069Z\n"
+"POT-Creation-Date: 2021-02-11T10:42:48.164Z\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -9,13 +9,11 @@ msgstr ""
 "X-Generator: POEditor.com\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#, fuzzy
 msgid "Data values - Create/update"
-msgstr "Crear/actualizar"
+msgstr ""
 
-#, fuzzy
 msgid "Event"
-msgstr "evento"
+msgstr ""
 
 msgid "Create/update"
 msgstr "Crear/actualizar"
@@ -29,13 +27,33 @@ msgstr ""
 msgid "Template {{id}} not loaded"
 msgstr "La plantilla {{id}} no se pudo cargar"
 
-#, fuzzy
 msgid "Data values - Delete"
-msgstr "valores de datos"
+msgstr ""
 
-#, fuzzy
+msgid ""
+"It is not possible to create products. The maximum number of products has "
+"been reached. Please contact your administrator."
+msgstr ""
+
+msgid "It is not possible to create product. Please provide {{field}}."
+msgstr ""
+
+msgid ""
+"It is not possible to create product. Monovalent and Polyvalent should be "
+"exclusive for product {{product}}."
+msgstr ""
+
+msgid ""
+"Could not import products. Invalid data received. Please review the excel "
+"file."
+msgstr ""
+
+msgid ""
+"Snake bite data store {{type}} is corrupted. Please contact an administrator."
+msgstr ""
+
 msgid "Cannot read data form id"
-msgstr "No se puede leer el archivo"
+msgstr ""
 
 msgid "Program or DataSet not found in instance"
 msgstr "No se encontraron el programa o el set de datos en la instancia"
@@ -58,6 +76,10 @@ msgstr "Programa"
 msgid "Access to Template Generation"
 msgstr "Acceso a la generación de plantillas"
 
+#, fuzzy
+msgid "Access to Import Data"
+msgstr "Acceso a la generación de plantillas"
+
 msgid "Access to Settings and Themes"
 msgstr "Acceso al área de configuración y a los temas"
 
@@ -71,6 +93,12 @@ msgid "Select Organisation Units on template generation and import"
 msgstr ""
 "Mostrar unidades organizativas durante la generación de la plantilla y al "
 "importar datos"
+
+msgid "Yes"
+msgstr ""
+
+msgid "No"
+msgstr ""
 
 msgid "Days"
 msgstr "Días"
@@ -106,16 +134,16 @@ msgstr "Modelos de Datos"
 msgid "Organisation Unit Visibility"
 msgstr "Visibilidad de unidades organizativas"
 
-msgid "Duplicate detection for events (programs)"
-msgstr "Detección de duplicados para eventos (programas)"
+msgid "Duplicate detection"
+msgstr "Detección de duplicados"
 
-msgid "Event date time difference"
+msgid "Event date time difference for events (programs)"
 msgstr ""
 "Diferencia aceptada entre las fechas de los eventos para la identificación "
-"de duplicados"
+"de duplicados para eventos (programas)"
 
-msgid "Data elements filter"
-msgstr "Filtro de elementos de datos"
+msgid "Data elements filter for events (programs)"
+msgstr "Filtro de elementos de datos para eventos (programas)"
 
 msgid "Data elements used for duplicates identification"
 msgstr "Elementos de datos usados para identificar los duplicados"
@@ -180,9 +208,8 @@ msgstr "Seleccione plantilla para exportar..."
 msgid "Data Model"
 msgstr "Modelo de Datos"
 
-#, fuzzy
 msgid "Period"
-msgstr "Periodo final"
+msgstr "Periodo"
 
 msgid "Start period"
 msgstr "Periodo inicial"
@@ -193,9 +220,8 @@ msgstr "Periodo final"
 msgid "Organisation units"
 msgstr "Unidades Organizativas"
 
-#, fuzzy
 msgid "Select organisation unit to populate data"
-msgstr "Seleccione al menos una unidad organizativa a la que asignar los datos"
+msgstr ""
 
 msgid "Select available organisation units to include in the template"
 msgstr "Seleccione las unidades organizativas para añadir a la plantilla"
@@ -320,6 +346,16 @@ msgstr ""
 "No se puede importar: Las versiones no coinciden (base de "
 "datos={{dbVersion}}, fichero={{sheetVersion}})"
 
+msgid "User with no permissions"
+msgstr ""
+
+msgid "It seems this user account does not have any permission. "
+msgstr ""
+
+msgid ""
+"Please get in touch with the admin if you need access to these sections."
+msgstr ""
+
 msgid "You need to select at least one element to export"
 msgstr "Seleccione al menos un elemento a exportar"
 
@@ -332,6 +368,9 @@ msgstr "Seleccione fecha de inicio y de fin para rellenar la plantilla"
 
 msgid "Downloading template..."
 msgstr "Descargando plantilla..."
+
+msgid "Couldn't generate template"
+msgstr ""
 
 msgid "Download template"
 msgstr "Descargar plantilla"
@@ -412,15 +451,11 @@ msgstr "Cancelar importación"
 msgid "Import only new records"
 msgstr "Importar solo los datos nuevos"
 
-#, fuzzy
 msgid ""
 "There are {{totalInvalid}} data values with an invalid organisation unit "
 "that will be ignored during import.\n"
 "You can still download them and send them to your administrator."
 msgstr ""
-"Existen {{number}} valores asociados a unidades organziativas no válidas que "
-"seran ignorados durante la importación. Por favor, descarguese estos datos y "
-"envieselos a su administrador o gestor de DHIS2"
 
 msgid "Checking duplicates..."
 msgstr "Comprobando duplicados..."
@@ -454,6 +489,9 @@ msgstr ""
 msgid "Import data"
 msgstr "Importar datos"
 
+msgid "Home"
+msgstr ""
+
 msgid "Themes"
 msgstr "Temas"
 
@@ -462,10 +500,3 @@ msgstr "Configuración"
 
 msgid "Settings saved"
 msgstr "Configuración guardada"
-
-#, fuzzy
-#~ msgid "Events - Create/update"
-#~ msgstr "Crear/actualizar"
-
-#~ msgid "Element not found"
-#~ msgstr "No se encontró el elemento"
